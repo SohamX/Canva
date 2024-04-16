@@ -3,9 +3,10 @@ import 'reactflow/dist/style.css';
 
 const Whiteboard = ()=> {
     return(
-        <div className="h-100%">
+        <div className="fixed top-0 left-0 h-[100vh] w-[100vw]">
             <ReactFlow>
-            < Background/>
+            < Background color="black" variant="dots"/>
+            
             </ReactFlow>
         </div>
     )

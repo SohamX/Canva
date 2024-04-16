@@ -34,8 +34,8 @@ const App = () => {
   const [email, setEmail]=useState('');
   return (
     <Router>
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-500">
-
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+          {/* Replace bg-gradient-to-r from-purple-500 to-indigo-500 with bg-gray-100 */}
           <Routes>
             <Route path="/" element={<LandingPage setUsername={setUsername} username={username} setEmail={setEmail} email={email}/>} />
             <Route path="/room/:roomId" element={<Room setUsername={setUsername} username={username} setEmail={setEmail} email={email} />} />

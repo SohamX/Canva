@@ -32,24 +32,24 @@ const LandingPage = ({setUsername,username,setEmail,email}) => {
   }, [username,email]);
 
   return (
-      <div className="bg-white bg-opacity-10 p-8 rounded-lg shadow-lg w-1/2">
-      <h1 className="text-3xl font-bold mb-6 text-white">Welcome to the Collaborative Whiteboard</h1>
+    <div className="bg-gradient-to-b from-gray-300 to-gray-400 bg-opacity-90 p-8 rounded-lg shadow-lg w-1/2">
+      <h1 className="text-3xl font-bold mb-6 text-black">Welcome to the Collaborative Whiteboard</h1>
       <input
         type="text"
         placeholder="Enter your username"
         value={username}
         onChange={(e) => setUsername(e.target.value.trim())}
-        className="px-4 py-2 rounded-md mb-4 w-full"
+        className="px-4 py-2 rounded-md mb-4 w-full border border-dashed border-gray-800"
       />
       <input
         type="text"
         placeholder="Enter your email"
         value={email}
         onChange={(e) => setEmail(e.target.value.trim())}
-        className="px-4 py-2 rounded-md mb-4 w-full"
+        className="px-4 py-2 rounded-md mb-4 w-full border border-dashed border-gray-800"
       />
       <div className="flex justify-center">
-        <button onClick={handleCreateRoom} className="bg-white text-purple-500 font-bold py-2 px-4 rounded-md mr-2">
+        <button onClick={handleCreateRoom} className="bg-white text-black-500 font-bold py-2 px-4 rounded-md mr-2 border border-gray-800">
           Create New Room
         </button>
         <input
@@ -57,9 +57,9 @@ const LandingPage = ({setUsername,username,setEmail,email}) => {
           placeholder="Enter room ID"
           value={roomId}
           onChange={(e) => setRoomId(e.target.value.trim())}
-          className="px-4 py-2 rounded-md mr-2"
+          className="px-4 py-2 rounded-md mr-2 border border-dashed border-gray-800"
         />
-        <button onClick={handleJoinRoom} className="bg-white text-purple-500 font-bold py-2 px-4 rounded-md">
+        <button onClick={handleJoinRoom} className="bg-white text-black-500 font-bold py-2 px-4 rounded-md border border-gray-800">
           Join Room
         </button>
       </div>
