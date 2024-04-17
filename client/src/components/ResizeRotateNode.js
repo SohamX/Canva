@@ -21,8 +21,7 @@ export default function ResizeRotateNode({
   const [rotatable, setRotatable] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF'); // Default color white
   const [textColor, setTextColor] = useState('#000000'); // Default color black
-  const [toolbarVisible, setToolbarVisible] = useState(true); // or initialize with whatever default visibility you want
-
+  const [toolbarVisible, setToolbarVisible] = useState(false); // or initialize with whatever default visibility you want
 
   useEffect(() => {
     if (!rotateControlRef.current) {
@@ -46,7 +45,6 @@ export default function ResizeRotateNode({
     if (data && typeof data.forceToolbarVisible !== 'undefined') {
       setToolbarVisible(data.forceToolbarVisible);
     }
-    console.log(toolbarVisible)
   }, [data]);  
 
   const handleColorChange = (event) => {
@@ -79,10 +77,22 @@ export default function ResizeRotateNode({
           }}
           className={`nodrag ${styles.rotateHandle}`}
         />
+        <div style={{ position: 'relative' }}>
         <NodeToolbar
           isVisible={toolbarVisible}
           position='right'
+          style={{ maxHeight: '200px', overflowY: 'auto' }} 
         >
+       {/*<div>
+             <label>
+              Label:
+              <input
+                type="text"
+                value={data.label}
+                onChange={(evt) => handleLabelChange(evt.target.value)}
+              />
+            </label>
+          </div> */}
           <div>
             <label>
               <input
@@ -124,6 +134,7 @@ export default function ResizeRotateNode({
             </label>
           </div>
       </NodeToolbar>
+      </div>
         <div >
           {data?.label}
         </div>

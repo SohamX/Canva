@@ -1,8 +1,10 @@
-import ReactFlow, { Background, Controls, MiniMap, Panel, useEdgesState, useNodesState, Position } from 'reactflow';
+import ReactFlow, { addEdge, Background, Controls, MiniMap, Panel, useEdgesState, useNodesState, Position } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useState, useCallback, } from 'react';
+import { useState, useRef, useCallback, useEffect  } from 'react';
 import ResizeRotateNode from "./ResizeRotateNode";
-
+import BgType from './BgType.js';
+import ToolVisible from './ToolVisible.js';
+import Sidebar from './Sidebar.js'
 // const initialNodes = [
 //     { id: '1', data: { label: '-' }, position: { x: 100, y: 100 } },
 //     { id: '2', data: { label: 'Node 2' }, position: { x: 100, y: 200 } },
@@ -32,14 +34,14 @@ const defaultNodes = [
   }
 ];
 
-const defaultEdges = [
-  {
-    id: "1->2",
-    source: "1",
-    target: "2",
-    type: "SimpleBezier"
-  }
-];
+// const defaultEdges = [
+//   {
+//     id: "1->2",
+//     source: "1",
+//     target: "2",
+//     type: "SimpleBezier"
+//   }
+// ];
 
 const nodeTypes = {
   resizeRotate: ResizeRotateNode
@@ -52,58 +54,114 @@ const defaultEdgeOptions = {
   }
 };
 
+let id = 0;
+const getId = () => `dndnode_${id++}`;
+
 const Whiteboard = ()=> {
+    const reactFlowWrapper = useRef(null);
     const [variant, setVariant] = useState('cross');
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
-    const [edges, setEdges] = useEdgesState(defaultEdges);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [selectNode, setSelectNode] = useEdgesState(defaultNodes[0])
+    const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-    const forceToolbarVisible = useCallback((enabled) =>
-      setNodes((nodes) =>
-        nodes.map((node) => ({
-          ...node,
-          data: { ...node.data, forceToolbarVisible: enabled },
-        })),console.log(nodes)
-      ),
+    const onConnect = useCallback(
+      (params) => setEdges((eds) => addEdge(params, eds)),
+      [],
+    );
+  
+    const onDragOver = useCallback((event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+    }, []);
+  
+    const onDrop = useCallback(
+      (event) => {
+        event.preventDefault();
+  
+        const type = event.dataTransfer.getData('application/reactflow');
+  
+        // check if the dropped element is valid
+        if (typeof type === 'undefined' || !type) {
+          return;
+        }
+  
+        // reactFlowInstance.project was renamed to reactFlowInstance.screenToFlowPosition
+        // and you don't need to subtract the reactFlowBounds.left/top anymore
+        // details: https://reactflow.dev/whats-new/2023-11-10
+        const position = reactFlowInstance.screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        const newNode = {
+          id: getId(),
+          type,
+          position,
+          data: { label: `node ${id}` },
+        };
+  
+        setNodes((nds) => nds.concat(newNode));
+      },
+      [reactFlowInstance],
     );
 
+    const onNodeDoubleClick = (event, node) => {
+      setSelectNode(node)
+      console.log(selectNode,"node");
+    }
+
+    useEffect(() => {
+      const errorHandler = (e) => {
+        if (
+          e.message.includes(
+            "ResizeObserver loop completed with undelivered notifications" ||
+              "ResizeObserver loop limit exceeded"
+          )
+        ) {
+          const resizeObserverErr = document.getElementById(
+            "webpack-dev-server-client-overlay"
+          );
+          if (resizeObserverErr) {
+            resizeObserverErr.style.display = "none";
+          }
+        }
+      };
+      window.addEventListener("error", errorHandler);
+    
+      return () => {
+        window.removeEventListener("error", errorHandler);
+      };
+    }, []);
+
     return(
-        <div className="fixed top-0 left-0 h-[100vh] w-[100vw]">
+      <>
+        <div className="reactflow-wrapper" class="fixed top-0 left-0 h-[100vh] w-[100vw]" ref={reactFlowWrapper}>
             <ReactFlow  
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
             nodes={nodes}
+            nodeTypes={nodeTypes}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onInit={setReactFlowInstance}
+            onNodesChange={onNodesChange}
+            onNodeDoubleClick= {onNodeDoubleClick}
             edges={edges}
             defaultEdgeOptions={defaultEdgeOptions}
             defaultViewport={{ zoom: 1, x: 0, y: 0 }}
             fitView
             fitViewOptions={{ padding: 0.4 }}
             nodeOrigin={nodeorigin}
-           // nodes={nodes}
             >
             <Background color="#ccc" variant={variant} />
-            <Panel position="top-center">
-                <div className="mt-6">
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={() => setVariant('dots')}>dots</button>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={() => setVariant('lines')}>lines</button>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setVariant('cross')}>cross</button>
-                </div>
-            </Panel>
+            <BgType setVariant={setVariant}/>
             <Controls />
-            <Panel position="top-left">
-              <div className="mt-60">
-                <h3>Override Node Toolbar visibility</h3>
-                <label>
-                  <input
-                    type="checkbox"
-                    onChange={(e) => forceToolbarVisible(e.target.checked)}
-                  />
-                  <span>Always show toolbar</span>
-                </label>
-              </div>
-            </Panel>
+            <ToolVisible setNodes={setNodes} />
             <MiniMap nodeStrokeWidth={3} zoomable pannable position='top-right' />
             </ReactFlow>
         </div>
+        <Sidebar selectNode={selectNode} />
+      </>
     )
 }
 

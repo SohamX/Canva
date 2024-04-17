@@ -60,7 +60,7 @@ const Room = ({setUsername, username, setEmail, email}) => {
   return (
     <div className="relative h-full w-full overflow-hidden">
       {users.length > 0 && <Userlist users={users} />}
-      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-10">
+      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-1">
         <h1 className="text-2xl font-bold">Room: {roomId}</h1>
       </div>
       <ReactFlowProvider>

@@ -199,14 +199,15 @@ io.on('connection', (socket) => {
       // Remove the user from all rooms
       for (const [roomId, room] of rooms.entries()) {
         const updatedRoom = room.filter((user) => user.email !== email);
-        const olduser = room.filter((user) => user.email === email)[0].user
         if (updatedRoom.length !== room.length) {
+          const olduser = room.filter((user) => user.email === email)[0].user
           if(updatedRoom.length===0){
             rooms.delete(roomId);
           }
           else{
             rooms.set(roomId, updatedRoom);
           }
+          console.log("old user",rooms)
           io.to(roomId).emit('updateUsers', updatedRoom.map((user) => user.user))
           io.to(roomId).emit('userLeft', olduser);
         }
