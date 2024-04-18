@@ -63,9 +63,11 @@ const Room = ({setUsername, username, setEmail, email}) => {
       <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-1">
         <h1 className="text-2xl font-bold">Room: {roomId}</h1>
       </div>
+      {socket ? (
       <ReactFlowProvider>
-      <Whiteboard />
+      <Whiteboard socket={socket} roomId={roomId} username={username} email={email} />
       </ReactFlowProvider>
+      ):null}
       <button onClick={() => navigate(-1)} className="fixed bottom-4 right-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
         Back
       </button>

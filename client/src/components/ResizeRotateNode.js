@@ -55,8 +55,6 @@ export default function ResizeRotateNode({
     setTextColor(event.target.value);
   };
 
-  console.log(data,"data")
-
   return (
     <>
       <div

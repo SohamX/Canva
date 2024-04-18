@@ -1,10 +1,9 @@
 import ReactFlow, { addEdge, Background, Controls, MiniMap, Panel, useEdgesState, useNodesState, Position } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useState, useRef, useCallback, useEffect  } from 'react';
-import ResizeRotateNode from "./ResizeRotateNode";
+import ResizeRotateNode from './ResizeRotateNode.js';
 import BgType from './BgType.js';
-import ToolVisible from './ToolVisible.js';
-import Sidebar from './Sidebar.js'
+import Sidebar from './Sidebar.js';
 // const initialNodes = [
 //     { id: '1', data: { label: '-' }, position: { x: 100, y: 100 } },
 //     { id: '2', data: { label: 'Node 2' }, position: { x: 100, y: 200 } },
@@ -57,12 +56,12 @@ const defaultEdgeOptions = {
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
-const Whiteboard = ()=> {
+const Whiteboard = ({socket,roomId,username,email})=> {
     const reactFlowWrapper = useRef(null);
     const [variant, setVariant] = useState('cross');
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-    const [selectNode, setSelectNode] = useEdgesState(defaultNodes[0])
+    const [selectNode, setSelectNode] = useEdgesState({})
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
     const onConnect = useCallback(
@@ -106,8 +105,14 @@ const Whiteboard = ()=> {
     );
 
     const onNodeDoubleClick = (event, node) => {
-      setSelectNode(node)
-      console.log(selectNode,"node");
+      if(selectNode=={}||selectNode.id!==node.id){
+        setSelectNode(node)
+        console.log(selectNode,"node");
+      }
+      else{
+        setSelectNode({})
+        console.log("unselect")
+      }
     }
 
     useEffect(() => {
@@ -133,6 +138,19 @@ const Whiteboard = ()=> {
       };
     }, []);
 
+    useEffect(()=>{
+      socket.on('updateNodes', ({nodes:noedes,email:emoail}) => {
+        console.log(noedes,"other user", emoail)
+        if(emoail!=email){
+          setNodes(noedes);
+        }
+      })
+      socket.emit('nodeUpdates', { nodes, roomId, username, email });
+      return () => {
+        socket.off('updateNodes'); // Cleanup: Remove the listener when the component unmounts
+    };
+    },[nodes])
+
     return(
       <>
         <div className="reactflow-wrapper" class="fixed top-0 left-0 h-[100vh] w-[100vw]" ref={reactFlowWrapper}>
@@ -156,11 +174,11 @@ const Whiteboard = ()=> {
             <Background color="#ccc" variant={variant} />
             <BgType setVariant={setVariant}/>
             <Controls />
-            <ToolVisible setNodes={setNodes} />
+            {/* <ToolVisible setNodes={setNodes} /> */}
             <MiniMap nodeStrokeWidth={3} zoomable pannable position='top-right' />
             </ReactFlow>
         </div>
-        <Sidebar selectNode={selectNode} />
+        <Sidebar setSelectNode={setSelectNode} selectNode={selectNode} setNodes={setNodes} nodes={nodes} /*onUpdateNode={(selectNode)=>update*//> 
       </>
     )
 }

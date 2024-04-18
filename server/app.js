@@ -148,7 +148,7 @@ const rooms = new Map();
 // Socket.io connection
 
 const connectedUsers = new Map(); // Store connected users and their socket IDs
-
+let isUpdating=false
 io.on('connection', (socket) => {
   socket.on('joinRoom', ({ roomId, username, email }) => {
     // Check if the user is already connected
@@ -189,6 +189,25 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('userJoined', username);
     console.log("new user",rooms)
   });
+
+  socket.on('nodeUpdates',({nodes,roomId,username,email})=>{
+    console.log(roomId)
+    console.log(username)
+    console.log(email)
+    console.log(nodes)
+    // if (!isUpdating) { // Check if updates are currently being processed
+    //   isUpdating = true; // Set the flag to indicate that updates are in progress
+    //   // Emit an event to inform all clients that updates are in progress
+    //   io.to(roomId).emit('updatesInProgress', true);
+
+    //   // Process node updates here...
+      io.to(roomId).emit('updateNodes',{nodes,email})
+      // // After processing updates, emit an event to inform all clients that updates are complete
+      // io.to(roomId).emit('updatesComplete', false);
+      // isUpdating = false; // Reset the flag to indicate that updates are complete
+  //}
+
+  })
 
   socket.on('disconnect', () => {
     // Remove the user from the connected users map
