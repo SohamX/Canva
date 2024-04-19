@@ -219,6 +219,12 @@ io.on('connection', (socket) => {
         // Handle dropping operation
         io.to(roomId).emit('deletingNode', { id, email, username });
         break;
+      case 'resizing':
+        // Handle resizing operation
+        const style = myNode.style;
+        const width = myNode.width;
+        const height = myNode.height;
+        io.to(roomId).emit('resizingNode', { id, style, width, height, email, username });
       case 'updatingLabel':
         // Handle updating operation
         const label = myNode.data.label;
@@ -258,6 +264,70 @@ io.on('connection', (socket) => {
       case 'deleting':
         // Handle dropping operation
         io.to(roomId).emit('deletingSelectedNodes', { ids, email, username });
+        break;
+      default:
+        // Handle unknown operation
+        console.log(`Unknown operation: ${operation}`);
+        break;
+    }
+  })
+
+  socket.on('edgeUpdates',({myEdge,roomId,username,email,operation})=>{
+    console.log(roomId)
+    console.log(username)
+    console.log(email)
+    console.log(myEdge)
+    console.log(operation)
+    //   // Process node updates here...
+    if(!myEdge){
+      console.log("empty edge")
+      return;
+    }
+    if(myEdge.source===myEdge.target){
+      console.log("self loop")
+      return;
+    }
+    const id = myEdge.id;
+    switch (operation) {
+      case 'adding':
+        // Handle adding operation
+        io.to(roomId).emit('addingEdge', { myEdge, email, username });
+        break;
+      case 'deleting':
+        // Handle dropping operation
+        io.to(roomId).emit('deletingEdge', { id, email, username });
+        break;
+      default:
+        // Handle unknown operation
+        console.log(`Unknown operation: ${operation}`);
+        break;
+    }
+  })
+
+  socket.on('selectedEdgesUpdates',({mySelectedEdges,roomId,username,email,operation})=>{
+    console.log(roomId)
+    console.log(username)
+    console.log(email)
+    console.log(mySelectedEdges, "selected edges")
+    console.log(operation)
+    //   // Process node updates here...
+    const ids = mySelectedEdges.map((edge) => edge.id);
+    switch (operation) {
+      case 'deleting':
+        // Handle dropping operation
+        io.to(roomId).emit('deletingSelectedEdges', { ids, email, username });
+        break;
+      case 'colouring':
+        // Handle dropping operation
+        console.log("colouring edges")
+        // const color = mySelectedEdges[0].style.stroke;
+        // io.to(roomId).emit('colouringSelectedEdges', { ids, color, email, username });
+        break;
+      case 'textcolouring':
+        // Handle dropping operation
+        console.log("text colouring edges")
+        // const textColor = mySelectedEdges[0].style.label.style.stroke;
+        // io.to(roomId).emit('textcolouringSelectedEdges', { ids, textColor, email, username });
         break;
       default:
         // Handle unknown operation

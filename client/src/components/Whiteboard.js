@@ -85,10 +85,29 @@ const Whiteboard = ({socket,roomId,username,email})=> {
       );
     };
 
-    const onConnect = useCallback(
-      (params) => setEdges((eds) => addEdge(params, eds)),
-      [],
-    );
+    const onConnect = (params) => {
+      const newEdge = {
+        id: `e${params.source}-${params.target}`,
+        ...params,
+        animated: true,
+        style: { stroke: '#f6ab6c' },
+      };
+      // Update the state with the new edge
+      setEdges((e) => [...e, newEdge]);
+      console.log(newEdge);
+      setOperation('adding');
+      setMyEdge(newEdge);
+    };
+
+    const onEdgesDelete = (elementsToRemove) => {
+      setOperation('deleting');
+      if(elementsToRemove.length === 1){
+        setMyEdge(elementsToRemove[0]);
+      }
+      else{
+        setMySelectedEdges(elementsToRemove);
+      }
+    };
   
     const onDragOver = useCallback((event) => {
       event.preventDefault();
@@ -187,11 +206,42 @@ const Whiteboard = ({socket,roomId,username,email})=> {
       };
     }, []);
 
+   useEffect(() => {
+  // Find the node that is being resized
+  const resizingNode = nodes.find((node) => node.resizing);
+    console.log(resizingNode);
+  // If a node is being resized and it's not the same as the current myNode, update myNode
+  if (resizingNode) {
+    setOperation('resizing');
+    setMyNode(resizingNode);
+  }
+
+  // If no node is being resized and myNode is not empty, set myNode to an empty object
+  if (!resizingNode && Object.keys(myNode).length > 0) {
+    setMyNode({});
+  }
+}, [nodes]);
+
 useEffect(() => {
+  const handleAddingEdge = ({ myEdge: newEdge, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setEdges((edges) => edges.concat(newEdge));
+    }
+  };
   const handleAddingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
     if (senderEmail !== email) {
       setNodes((nodes) => nodes.concat(newNode));
       id++;
+    }
+  };
+  const handleDeletingEdge = ({ id, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setEdges((edges) => edges.filter((edge) => edge.id !== id));
+    }
+  };
+  const handleDeletingEdges = ({ ids, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setEdges((edges) => edges.filter((edge) => !ids.some((id) => id === edge.id)));
     }
   };
   const handleDeletingNode = ({ id, email: senderEmail, username: otheruser }) => {
@@ -226,6 +276,15 @@ useEffect(() => {
       );
     }
   };
+  const handleResizingNode = ({ id, style, width, height, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === id ? { ...node, style, width, height } : node
+        )
+      );
+    }
+  };
   const handleUpdatingLabelNode = ({ id, label, email: senderEmail, username: otheruser }) => {
     if (senderEmail !== email) {
       setNodes((nodes) =>
@@ -254,20 +313,28 @@ useEffect(() => {
     }
   };
 
+  socket.on('addingEdge', handleAddingEdge);
   socket.on('addingNode', handleAddingNode);
+  socket.on('deletingEdge', handleDeletingEdge);
+  socket.on('deletingSelectedEdges', handleDeletingEdges);
   socket.on('deletingNode', handleDeletingNode);
   socket.on('deletingSelectedNodes', handleDeletingNodes);
   socket.on('draggingNode', handleDraggingNode);
   socket.on('draggingSelectedNodes', handleDraggingNodes);
+  socket.on('resizingNode', handleResizingNode);
   socket.on('updatingLabelNode', handleUpdatingLabelNode);
   socket.on('updatingTextColor', handleUpdattinTextColor);
   socket.on('updatingBgColor', handleUpdatingBgColor);
   return () => {
     socket.off('addingNode');
-    socket.off('draggingNodes');
-    socket.off('draggingSelectedNodes');
+    socket.off('addingEdge');
+    socket.off('deletingEdge');
+    socket.off('deletingSelectedEdges');
     socket.off('deletingNode');
     socket.off('deletingSelectedNodes');
+    socket.off('draggingNodes');
+    socket.off('draggingSelectedNodes');
+    socket.off('resizingNode');
     socket.off('updatingLabelNode');
     socket.off('updatingTextColor');
     socket.off('updatingBgColor');
@@ -284,6 +351,17 @@ useEffect(() => {
   setOperation('');
 }, [mySelectedNodes, roomId, username, email, socket]);
 
+useEffect(() => {
+  socket.emit('edgeUpdates', { myEdge, roomId, username, email, operation });
+  setOperation('');
+},[myEdge, roomId, username, email, socket]);
+
+useEffect(() => {
+  socket.emit('selectedEdgesUpdates', { mySelectedEdges, roomId, username, email, operation });
+  setOperation('');
+},[mySelectedEdges, roomId, username, email, socket]);
+
+
     return(
       <>
         <div className="reactflow-wrapper" class="fixed top-0 left-0 h-[100vh] w-[100vw]" ref={reactFlowWrapper}>
@@ -297,6 +375,7 @@ useEffect(() => {
             nodeOrigin={nodeorigin}
             nodeTypes={nodeTypes}
             onEdgesChange={onEdgesChange}
+            onEdgesDelete={onEdgesDelete}
             onConnect={onConnect}
             onDrop={onDrop}
             onDragOver={onDragOver}
