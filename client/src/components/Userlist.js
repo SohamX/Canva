@@ -1,7 +1,6 @@
 
 
 const userList = (users)=>{
-    console.log(users)
     return(
         <div className="fixed top-0 left-0 h-[30vh] w-[15vw] bg-white rounded-lg shadow-lg p-4 overflow-auto z-10 mt-8 ml-8">
         <h2 className="text-lg font-bold mb-2">Users</h2>

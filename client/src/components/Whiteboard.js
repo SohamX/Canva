@@ -63,6 +63,11 @@ const Whiteboard = ({socket,roomId,username,email})=> {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectNode, setSelectNode] = useEdgesState({})
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
+    const [myNode, setMyNode] = useState(defaultNodes)
+    const [myEdge, setMyEdge] = useState(null)
+    const [operation, setOperation] = useState('');
+    const [mySelectedNodes, setMySelectedNodes] = useState([]);
+    const [mySelectedEdges, setMySelectedEdges] = useState([]);
 
     const onConnect = useCallback(
       (params) => setEdges((eds) => addEdge(params, eds)),
@@ -100,6 +105,8 @@ const Whiteboard = ({socket,roomId,username,email})=> {
         };
   
         setNodes((nds) => nds.concat(newNode));
+        setMyNode(newNode);
+        setOperation('adding');
       },
       [reactFlowInstance],
     );
@@ -107,13 +114,41 @@ const Whiteboard = ({socket,roomId,username,email})=> {
     const onNodeDoubleClick = (event, node) => {
       if(selectNode=={}||selectNode.id!==node.id){
         setSelectNode(node)
-        console.log(selectNode,"node");
       }
       else{
         setSelectNode({})
-        console.log("unselect")
       }
     }
+
+    const onNodeDrag = (event, node) => {
+      delete node.dragging;
+      delete node.selected;
+      delete node.positionAbsolute;
+      setMyNode(node);
+      setOperation('dragging');
+    };
+
+    const onSelectionDrag = (event, nodes) => {
+      const newNodes = nodes.map(node => {
+        const { dragging, selected, positionAbsolute, ...rest } = node;
+        return rest;
+      });
+      setMySelectedNodes(newNodes);
+      setOperation('dragging');
+    }
+
+    const onNodesDelete = (elementsToRemove) => {
+      console.log(elementsToRemove);
+      if(elementsToRemove.length === 1){
+        setMyNode(elementsToRemove[0]);
+        setOperation('deleting');
+      }     
+      else{
+        console.log("Multiple elements selected for deletion");
+        setMySelectedNodes(elementsToRemove)
+        setOperation('deleting');
+      }
+    };
 
     useEffect(() => {
       const errorHandler = (e) => {
@@ -138,24 +173,74 @@ const Whiteboard = ({socket,roomId,username,email})=> {
       };
     }, []);
 
-    useEffect(()=>{
-      socket.on('updateNodes', ({nodes:noedes,email:emoail}) => {
-        console.log(noedes,"other user", emoail)
-        if(emoail!=email){
-          setNodes(noedes);
-        }
-      })
-      socket.emit('nodeUpdates', { nodes, roomId, username, email });
-      return () => {
-        socket.off('updateNodes'); // Cleanup: Remove the listener when the component unmounts
-    };
-    },[nodes])
+useEffect(() => {
+  const handleAddingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) => nodes.concat(newNode));
+      id++;
+    }
+  };
+  const handleDeletingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) => nodes.filter((node) => node.id !== newNode.id));
+    }
+  };
+  const handleDeletingNodes = ({ mySelectedNodes: newNodes, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) => nodes.filter((node) => !newNodes.some((newNode) => newNode.id === node.id)));
+    }
+  };
+  const handleDraggingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) =>
+      nodes.map((node) => 
+        node.id === newNode.id ? newNode : node
+        )
+      );
+    }
+  };
+  const handleDraggingNodes = ({ mySelectedNodes: newNodes, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      console.log(newNodes,"newNodes");
+      setNodes((nodes) =>
+      nodes.map((node) => {
+        const newNode = newNodes.find((newNode) => newNode.id === node.id);
+        return newNode ? newNode : node;
+        })
+      );
+    }
+  }
+  socket.on('addingNode', handleAddingNode);
+  socket.on('deletingNode', handleDeletingNode);
+  socket.on('deletingSelectedNodes', handleDeletingNodes);
+  socket.on('draggingNode', handleDraggingNode);
+  socket.on('draggingSelectedNodes', handleDraggingNodes);
+  return () => {
+    socket.off('addingNode');
+    socket.off('draggingNodes');
+    socket.off('deleting');
+  };  
+}, [email, socket]);
+
+useEffect(() => {
+    socket.emit('nodeUpdates', { myNode, roomId, username, email, operation });
+}, [myNode, roomId, username, email, socket]);
+
+useEffect(() => {
+  socket.emit('selectedNodesUpdates', { mySelectedNodes, roomId, username, email, operation });
+}, [mySelectedNodes, roomId, username, email, socket]);
 
     return(
       <>
         <div className="reactflow-wrapper" class="fixed top-0 left-0 h-[100vh] w-[100vw]" ref={reactFlowWrapper}>
             <ReactFlow  
+            defaultEdgeOptions={defaultEdgeOptions}
+            defaultViewport={{ zoom: 1, x: 0, y: 0 }}
+            edges={edges}
+            fitView
+            fitViewOptions={{ padding: 0.4 }}
             nodes={nodes}
+            nodeOrigin={nodeorigin}
             nodeTypes={nodeTypes}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
@@ -164,12 +249,9 @@ const Whiteboard = ({socket,roomId,username,email})=> {
             onInit={setReactFlowInstance}
             onNodesChange={onNodesChange}
             onNodeDoubleClick= {onNodeDoubleClick}
-            edges={edges}
-            defaultEdgeOptions={defaultEdgeOptions}
-            defaultViewport={{ zoom: 1, x: 0, y: 0 }}
-            fitView
-            fitViewOptions={{ padding: 0.4 }}
-            nodeOrigin={nodeorigin}
+            onNodeDrag= {onNodeDrag}
+            onNodesDelete={onNodesDelete}
+            onSelectionDrag={onSelectionDrag}
             >
             <Background color="#ccc" variant={variant} />
             <BgType setVariant={setVariant}/>
@@ -178,7 +260,7 @@ const Whiteboard = ({socket,roomId,username,email})=> {
             <MiniMap nodeStrokeWidth={3} zoomable pannable position='top-right' />
             </ReactFlow>
         </div>
-        <Sidebar setSelectNode={setSelectNode} selectNode={selectNode} setNodes={setNodes} nodes={nodes} /*onUpdateNode={(selectNode)=>update*//> 
+        <Sidebar selectNode={selectNode} setNodes={setNodes} setMyNode={setMyNode} myNode={myNode} /*onUpdateNode={(selectNode)=>update*//> 
       </>
     )
 }

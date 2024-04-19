@@ -34,17 +34,14 @@ const Room = ({setUsername, username, setEmail, email}) => {
     });
     // Update the user list when receiving an 'updateUsers' event from the server
     newSocket.on('updateUsers', (roomUsers) => {
-      console.log(roomUsers,"wgsh")
       setUsers(roomUsers);
     });
     // Display an alert when a user leaves
     newSocket.on('userLeft', (oldUser) => {
-      console.log(oldUser,"oldUser")
       window.alert(`${oldUser} left the room`);
     });
     // Display an alert when a new user joins
     newSocket.on('userJoined', (newUser) => {
-      console.log(newUser,"newUser")
       if(username!==newUser){
         window.alert(`${newUser} joined the room`);
       }

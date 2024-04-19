@@ -190,23 +190,54 @@ io.on('connection', (socket) => {
     console.log("new user",rooms)
   });
 
-  socket.on('nodeUpdates',({nodes,roomId,username,email})=>{
+  socket.on('nodeUpdates',({myNode,roomId,username,email,operation})=>{
     console.log(roomId)
     console.log(username)
     console.log(email)
-    console.log(nodes)
-    // if (!isUpdating) { // Check if updates are currently being processed
-    //   isUpdating = true; // Set the flag to indicate that updates are in progress
-    //   // Emit an event to inform all clients that updates are in progress
-    //   io.to(roomId).emit('updatesInProgress', true);
-
+    console.log(myNode)
+    console.log(operation)
     //   // Process node updates here...
-      io.to(roomId).emit('updateNodes',{nodes,email})
-      // // After processing updates, emit an event to inform all clients that updates are complete
-      // io.to(roomId).emit('updatesComplete', false);
-      // isUpdating = false; // Reset the flag to indicate that updates are complete
-  //}
+    switch (operation) {
+      case 'adding':
+        // Handle adding operation
+        io.to(roomId).emit('addingNode', { myNode, email, username });
+        break;
+      case 'dragging':
+        // Handle dragging operation
+        io.to(roomId).emit('draggingNode', { myNode, email, username });
+        break;
+      case 'deleting':
+        // Handle dropping operation
+        io.to(roomId).emit('deletingNode', { myNode, email, username });
+        break;
+      default:
+        // Handle unknown operation
+        console.log(`Unknown operation: ${operation}`);
+        break;
+    }
+  })
 
+  socket.on('selectedNodesUpdates',({mySelectedNodes,roomId,username,email,operation})=>{
+    console.log(roomId)
+    console.log(username)
+    console.log(email)
+    console.log(mySelectedNodes, "selected nodes")
+    console.log(operation)
+    //   // Process node updates here...
+    switch (operation) {
+      case 'dragging':
+        // Handle dragging operation
+        io.to(roomId).emit('draggingSelectedNodes', { mySelectedNodes, email, username });
+        break;
+      case 'deleting':
+        // Handle dropping operation
+        io.to(roomId).emit('deletingSelectedNodes', { mySelectedNodes, email, username });
+        break;
+      default:
+        // Handle unknown operation
+        console.log(`Unknown operation: ${operation}`);
+        break;
+    }
   })
 
   socket.on('disconnect', () => {

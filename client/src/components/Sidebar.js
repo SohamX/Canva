@@ -1,11 +1,10 @@
 import React from 'react';
 import { useCallback, useState } from 'react';
 
-export default ({setSelectNode,selectNode,setNodes,nodes}) => {
+export default ({selectNode,setNodes,setMyNode,myNode}) => {
   const [ label, setLabel ] = useState(selectNode.data?.label||'')
-  console.log(selectNode)
   const forceToolbarVisible = useCallback((enabled) =>
-    setNodes((nodes) =>
+    setMyNode((nodes) =>
     nodes.map((node) => ({
       ...node,
       data: { ...node.data, forceToolbarVisible: enabled },
@@ -15,7 +14,7 @@ export default ({setSelectNode,selectNode,setNodes,nodes}) => {
 
 const handleLabelChange = (newLabel) => {
   if (selectNode && selectNode.data) {
-    setNodes((nodes) =>
+    setMyNode((nodes) =>
     nodes.map(node => {
       if (node.id === selectNode.id) {
             // Update the label of the selected node
@@ -30,6 +29,7 @@ const handleLabelChange = (newLabel) => {
           return node;
     })
     )
+    setNodes(myNode)
   }
 };
 
