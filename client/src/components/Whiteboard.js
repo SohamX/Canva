@@ -15,7 +15,7 @@ const defaultNodes = [
   {
     id: "1",
     position: { x: 100, y: 100 },
-    data: { label: "Node 1" },
+    data: { label: "Node 1", forceToolbarVisible: false, textColor: '#000000', backgroundColor: '#FFFFFF'},
     type: "resizeRotate",
     sourcePosition: Position.Bottom,
     targetPosition: Position.Top,
@@ -25,7 +25,7 @@ const defaultNodes = [
   {
     id: "2",
     position: { x: 100, y: 400 },
-    data: { label: "Node 2" },
+    data: { label: "Node 2", forceToolbarVisible: false, textColor: '#000000', backgroundColor: '#FFFFFF' },
     type: "resizeRotate",
     sourcePosition: Position.Bottom,
     targetPosition: Position.Top,
@@ -69,6 +69,22 @@ const Whiteboard = ({socket,roomId,username,email})=> {
     const [mySelectedNodes, setMySelectedNodes] = useState([]);
     const [mySelectedEdges, setMySelectedEdges] = useState([]);
 
+    const handleBgColorChange = (nodeId, newBackgroundColor) => {
+      setNodes((nodes) =>
+        nodes.map((node) => 
+          node.id === nodeId ? { ...node, data: { ...node.data, backgroundColor: newBackgroundColor } } : node
+        )
+      );
+    };
+    
+    const handleTextColorChange = (nodeId, newTextColor) => {
+      setNodes((nodes) =>
+        nodes.map((node) => 
+          node.id === nodeId ? { ...node, data: { ...node.data, textColor: newTextColor } } : node
+        )
+      );
+    };
+
     const onConnect = useCallback(
       (params) => setEdges((eds) => addEdge(params, eds)),
       [],
@@ -101,7 +117,7 @@ const Whiteboard = ({socket,roomId,username,email})=> {
           id: getId(),
           type,
           position,
-          data: { label: `node ${id}` },
+          data: { label: `node ${id}`, forceToolbarVisible: false, textColor: '#000000', backgroundColor: '#FFFFFF'},
         };
   
         setNodes((nds) => nds.concat(newNode));
@@ -138,13 +154,11 @@ const Whiteboard = ({socket,roomId,username,email})=> {
     }
 
     const onNodesDelete = (elementsToRemove) => {
-      console.log(elementsToRemove);
       if(elementsToRemove.length === 1){
         setMyNode(elementsToRemove[0]);
         setOperation('deleting');
       }     
       else{
-        console.log("Multiple elements selected for deletion");
         setMySelectedNodes(elementsToRemove)
         setOperation('deleting');
       }
@@ -180,54 +194,94 @@ useEffect(() => {
       id++;
     }
   };
-  const handleDeletingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
+  const handleDeletingNode = ({ id, email: senderEmail, username: otheruser }) => {
     if (senderEmail !== email) {
-      setNodes((nodes) => nodes.filter((node) => node.id !== newNode.id));
+      setNodes((nodes) => nodes.filter((node) => node.id !== id));
     }
   };
-  const handleDeletingNodes = ({ mySelectedNodes: newNodes, email: senderEmail, username: otheruser }) => {
+  const handleDeletingNodes = ({ ids, email: senderEmail, username: otheruser }) => {
     if (senderEmail !== email) {
-      setNodes((nodes) => nodes.filter((node) => !newNodes.some((newNode) => newNode.id === node.id)));
+      setNodes((nodes) => nodes.filter((node) => !ids.some((id) => id === node.id)));
     }
   };
-  const handleDraggingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
+  const handleDraggingNode = ({ id, position, email: senderEmail, username: otheruser }) => {
     if (senderEmail !== email) {
       setNodes((nodes) =>
-      nodes.map((node) => 
-        node.id === newNode.id ? newNode : node
+        nodes.map((node) => 
+          node.id === id ? { ...node, position } : node
         )
       );
     }
   };
-  const handleDraggingNodes = ({ mySelectedNodes: newNodes, email: senderEmail, username: otheruser }) => {
+  const handleDraggingNodes = ({ ids, positions, email: senderEmail, username: otheruser }) => {
     if (senderEmail !== email) {
-      console.log(newNodes,"newNodes");
       setNodes((nodes) =>
-      nodes.map((node) => {
-        const newNode = newNodes.find((newNode) => newNode.id === node.id);
-        return newNode ? newNode : node;
+        nodes.map((node) => {
+          const index = ids.indexOf(node.id);
+          if (index !== -1) {
+            return { ...node, position: positions[index] };
+          }
+          return node;
         })
       );
     }
-  }
+  };
+  const handleUpdatingLabelNode = ({ id, label, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) =>
+      nodes.map((node) => 
+        node.id === id ? {...node, data: { ...node.data, label} } : node
+        )
+      );
+    }
+  };
+  const handleUpdattinTextColor = ({ id, textColor, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) =>
+      nodes.map((node) => 
+        node.id === id ? {...node, data: { ...node.data, textColor} } : node
+        )
+      );
+    }
+  };
+  const handleUpdatingBgColor = ({ id, backgroundColor, email: senderEmail, username: otheruser }) => {
+    if (senderEmail !== email) {
+      setNodes((nodes) =>
+      nodes.map((node) => 
+        node.id === id ? {...node, data: { ...node.data, backgroundColor} } : node
+        )
+      );
+    }
+  };
+
   socket.on('addingNode', handleAddingNode);
   socket.on('deletingNode', handleDeletingNode);
   socket.on('deletingSelectedNodes', handleDeletingNodes);
   socket.on('draggingNode', handleDraggingNode);
   socket.on('draggingSelectedNodes', handleDraggingNodes);
+  socket.on('updatingLabelNode', handleUpdatingLabelNode);
+  socket.on('updatingTextColor', handleUpdattinTextColor);
+  socket.on('updatingBgColor', handleUpdatingBgColor);
   return () => {
     socket.off('addingNode');
     socket.off('draggingNodes');
-    socket.off('deleting');
+    socket.off('draggingSelectedNodes');
+    socket.off('deletingNode');
+    socket.off('deletingSelectedNodes');
+    socket.off('updatingLabelNode');
+    socket.off('updatingTextColor');
+    socket.off('updatingBgColor');
   };  
 }, [email, socket]);
 
 useEffect(() => {
     socket.emit('nodeUpdates', { myNode, roomId, username, email, operation });
+    setOperation('');
 }, [myNode, roomId, username, email, socket]);
 
 useEffect(() => {
   socket.emit('selectedNodesUpdates', { mySelectedNodes, roomId, username, email, operation });
+  setOperation('');
 }, [mySelectedNodes, roomId, username, email, socket]);
 
     return(
@@ -252,6 +306,8 @@ useEffect(() => {
             onNodeDrag= {onNodeDrag}
             onNodesDelete={onNodesDelete}
             onSelectionDrag={onSelectionDrag}
+            onTextColourChange={handleTextColorChange}
+            onBgColourChange={handleBgColorChange}
             >
             <Background color="#ccc" variant={variant} />
             <BgType setVariant={setVariant}/>
@@ -260,7 +316,7 @@ useEffect(() => {
             <MiniMap nodeStrokeWidth={3} zoomable pannable position='top-right' />
             </ReactFlow>
         </div>
-        <Sidebar selectNode={selectNode} setNodes={setNodes} setMyNode={setMyNode} myNode={myNode} /*onUpdateNode={(selectNode)=>update*//> 
+        <Sidebar selectNode={selectNode} setNodes={setNodes} setMyNode={setMyNode} setOperation={setOperation} /*onUpdateNode={(selectNode)=>update*//> 
       </>
     )
 }

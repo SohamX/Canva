@@ -197,19 +197,43 @@ io.on('connection', (socket) => {
     console.log(myNode)
     console.log(operation)
     //   // Process node updates here...
+    const id = myNode.id;
     switch (operation) {
       case 'adding':
         // Handle adding operation
+        // const room = rooms.get(roomId);
+        // const userIndex = room.findIndex((user) => user.email === email);
+        // if (userIndex !== -1) {
+        //   room[userIndex].myNode = myNode;
+        //   rooms.set(roomId, room);
+        // }
+        // console.log("adding node",rooms)
         io.to(roomId).emit('addingNode', { myNode, email, username });
         break;
       case 'dragging':
         // Handle dragging operation
-        io.to(roomId).emit('draggingNode', { myNode, email, username });
+        const position = myNode.position;
+        io.to(roomId).emit('draggingNode', { id, position, email, username });
         break;
       case 'deleting':
         // Handle dropping operation
-        io.to(roomId).emit('deletingNode', { myNode, email, username });
+        io.to(roomId).emit('deletingNode', { id, email, username });
         break;
+      case 'updatingLabel':
+        // Handle updating operation
+        const label = myNode.data.label;
+        io.to(roomId).emit('updatingLabelNode', { id, label, email, username });
+        break;
+      case 'updatingTextColor':
+        // Handle updating operation
+        const textColor = myNode.data.textColor;
+        io.to(roomId).emit('updatingTextColor', { id, textColor, email, username });
+        break;
+      case 'updatingBgColor':
+        // Handle updating operation
+        const backgroundColor = myNode.data.backgroundColor;
+        io.to(roomId).emit('updatingBgColor', { id, backgroundColor, email, username });
+        break;  
       default:
         // Handle unknown operation
         console.log(`Unknown operation: ${operation}`);
@@ -224,14 +248,16 @@ io.on('connection', (socket) => {
     console.log(mySelectedNodes, "selected nodes")
     console.log(operation)
     //   // Process node updates here...
+    const ids = mySelectedNodes.map((node) => node.id);
     switch (operation) {
       case 'dragging':
         // Handle dragging operation
-        io.to(roomId).emit('draggingSelectedNodes', { mySelectedNodes, email, username });
+        const positions = mySelectedNodes.map((node) => node.position);
+        io.to(roomId).emit('draggingSelectedNodes', { ids, positions, email, username });
         break;
       case 'deleting':
         // Handle dropping operation
-        io.to(roomId).emit('deletingSelectedNodes', { mySelectedNodes, email, username });
+        io.to(roomId).emit('deletingSelectedNodes', { ids, email, username });
         break;
       default:
         // Handle unknown operation

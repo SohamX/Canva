@@ -13,14 +13,16 @@ export default function ResizeRotateNode({
   sourcePosition = Position.Left,
   targetPosition = Position.Right,
   data,
+  // onTextColorChange,
+  // onBgColorChange,
 }) {
   const rotateControlRef = useRef(null);
   const updateNodeInternals = useUpdateNodeInternals();
   const [rotation, setRotation] = useState(0);
   const [resizable, setResizable] = useState(true);
   const [rotatable, setRotatable] = useState(true);
-  const [backgroundColor, setBackgroundColor] = useState('#FFFFFF'); // Default color white
-  const [textColor, setTextColor] = useState('#000000'); // Default color black
+  const [backgroundColor, setBackgroundColor] = useState(data.backgroundColor); // Default color white
+  const [textColor, setTextColor] = useState(data.textColor); // Default color black
   const [toolbarVisible, setToolbarVisible] = useState(false); // or initialize with whatever default visibility you want
 
   useEffect(() => {
@@ -41,19 +43,31 @@ export default function ResizeRotateNode({
     selection.call(dragHandler);
   }, [id, updateNodeInternals]);
 
+  // useEffect(() => {
+  //   updateNodeInternals(id);
+  // }, [textColor, backgroundColor]);
+
   useEffect(() => {
-    if (data && typeof data.forceToolbarVisible !== 'undefined') {
+    if (data && typeof data.forceToolbarVisible !== 'undefined' && data.forceToolbarVisible !== toolbarVisible) {
       setToolbarVisible(data.forceToolbarVisible);
+    }
+    if (data && data.backgroundColor && data.backgroundColor !== backgroundColor) {
+      setBackgroundColor(data.backgroundColor);
+    }    
+    if (data && data.textColor && data.textColor !== textColor) {
+      setTextColor(data.textColor);
     }
   }, [data]);  
 
-  const handleColorChange = (event) => {
-    setBackgroundColor(event.target.value);
-  };
+  // const handleColorChange = (event) => {
+  //   setBackgroundColor(event.target.value);
+  //   onBgColorChange(id, event.target.value);
+  // };
 
-  const handleTextColorChange = (event) => {
-    setTextColor(event.target.value);
-  };
+  // const handleTextColorChange = (event) => {
+  //   setTextColor(event.target.value);
+  //   onTextColorChange(event.target.value);
+  // };
 
   return (
     <>
@@ -111,7 +125,7 @@ export default function ResizeRotateNode({
               rotatable
             </label>
           </div>
-          <div>
+          {/* <div>
             <label>
               Background Color:
               <input
@@ -130,7 +144,7 @@ export default function ResizeRotateNode({
                 defaultValue={textColor}
               />
             </label>
-          </div>
+          </div> */}
       </NodeToolbar>
       </div>
         <div >

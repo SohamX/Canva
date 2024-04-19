@@ -1,23 +1,80 @@
 import React from 'react';
 import { useCallback, useState } from 'react';
 
-export default ({selectNode,setNodes,setMyNode,myNode}) => {
+export default ({selectNode,setNodes,setMyNode,setOperation}) => {
   const [ label, setLabel ] = useState(selectNode.data?.label||'')
-  const forceToolbarVisible = useCallback((enabled) =>
-    setMyNode((nodes) =>
+  const forceToolbarVisible = useCallback((enabled) => {
+    setNodes((nodes) =>
     nodes.map((node) => ({
       ...node,
       data: { ...node.data, forceToolbarVisible: enabled },
     }))
-    ),
-  );
+    );
+  });
+
+  const handleBgColorChange = (event) => {
+    if (selectNode && selectNode.data) {
+      setMyNode(selectNode)
+      setOperation('updatingBgColor');
+      setMyNode((node) => ({
+        ...node,
+        data: { ...node.data, backgroundColor: event.target.value },
+      }))
+      setNodes((nodes) =>
+      nodes.map(node => {
+        if (node.id === selectNode.id) {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  backgroundColor: event.target.value
+                }
+              };
+            }
+            return node;
+        })
+      )
+    }
+  };
+
+  const handleTextColorChange = (event) => {
+    if (selectNode && selectNode.data) {
+      setMyNode(selectNode)
+      setOperation('updatingTextColor');
+      setMyNode((node) => ({
+        ...node,
+        data: { ...node.data, textColor: event.target.value },
+      }))
+      setNodes((nodes) =>
+      nodes.map(node => {
+        if (node.id === selectNode.id) {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  textColor: event.target.value
+                }
+              };
+            }
+            return node;
+          }
+        )
+      )
+    }
+  };
+
 
 const handleLabelChange = (newLabel) => {
   if (selectNode && selectNode.data) {
-    setMyNode((nodes) =>
+    setMyNode(selectNode)
+    setOperation('updatingLabel');
+    setMyNode((node) => ({
+      ...node,
+      data: { ...node.data, label: newLabel},
+    }))
+    setNodes((nodes) =>
     nodes.map(node => {
       if (node.id === selectNode.id) {
-            // Update the label of the selected node
             return {
               ...node,
               data: {
@@ -29,14 +86,14 @@ const handleLabelChange = (newLabel) => {
           return node;
     })
     )
-    setNodes(myNode)
+//    setNodes(myNode)
   }
 };
 
-const handleUpdateClick = () => {
-  // Call handleLabelChange with the current value of the input field
-  handleLabelChange(label);
-};
+  const handleUpdateClick = () => {
+    // Call handleLabelChange with the current value of the input field
+    handleLabelChange(label);
+  };
 
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -87,6 +144,26 @@ const handleUpdateClick = () => {
         Update
       </button>
         </div>
+        <div>
+            <label>
+              Background Color:
+              <input
+                type="color"
+                onChange={handleBgColorChange}
+                defaultValue={selectNode.data.backgroundColor}
+              />
+            </label>
+          </div>
+          <div>
+            <label>
+              Text Color:
+              <input
+                type="color"
+                onChange={handleTextColorChange}
+                defaultValue={selectNode.data.textColor}
+              />
+            </label>
+          </div>
         </>
       ) : null}
     </aside>
