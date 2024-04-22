@@ -101,18 +101,12 @@ const handleLabelChange = (newLabel) => {
   };
   
   return (
-    <aside className="relative inline-block z-2 border-r border-gray-300 p-4 h-48 bg-white overflow-y-scroll">
+    <aside className="fixed inline-block z-2 border-r border-gray-300 p-4 h-2/6 bg-white overflow-y-auto md:w-64 lg:w-80 top-1/3 left-0 shadow-lg rounded-lg">
       <h1 className="text-lg font-semibold">SidePanel</h1>
       <div className="text-sm text-gray-600 mb-4">You can drag these nodes to the pane on the right.</div>
       <div className="dndnode input h-12 px-4 border border-blue-500 rounded-md flex justify-center items-center cursor-grab" onDragStart={(event) => onDragStart(event, 'resizeRotate')} draggable>
         resizeRotate Node
       </div>
-      {/* <div className="dndnode h-12 px-4 border border-gray-500 rounded-md flex justify-center items-center cursor-grab" onDragStart={(event) => onDragStart(event, 'default')} draggable>
-        Default Node
-      </div>
-      <div className="dndnode output h-12 px-4 border border-pink-500 rounded-md flex justify-center items-center cursor-grab" onDragStart={(event) => onDragStart(event, 'output')} draggable>
-        Output Node
-      </div> */}
           <h3 className="text-lg font-semibold">Override Node Toolbar visibility</h3>
           <div className="mt-4">
             <label className="flex items-center">

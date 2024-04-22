@@ -57,7 +57,7 @@ export default function ResizeRotateNode({
     if (data && data.textColor && data.textColor !== textColor) {
       setTextColor(data.textColor);
     }
-  }, [data]);  
+  }, [data, toolbarVisible, backgroundColor, textColor]);  
 
   // const handleColorChange = (event) => {
   //   setBackgroundColor(event.target.value);

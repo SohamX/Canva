@@ -14,7 +14,7 @@ const LandingPage = ({setUsername,username,setEmail,email}) => {
     if (storedEmail) {
       setEmail(storedEmail);
     }
-  }, []);
+  }, [ setUsername, setEmail]);
 
   const handleCreateRoom = () => {
     // TODO: Generate room ID

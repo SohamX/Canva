@@ -8,12 +8,9 @@ const io = require("socket.io")(server, {
 	  origin: "http://localhost:3001"
 	}
   });
-const roomsRouter = require('./routes/rooms.js');
 
 app.use(cors());
 app.use(express.json());
-
-app.use('/rooms', roomsRouter);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
@@ -159,11 +156,19 @@ io.on('connection', (socket) => {
       // Find the room and update the user's socket ID
       const room = rooms.get(roomId);
       if (room) {
-        const userIndex = room.findIndex((user) => user.email === email);
-        if (userIndex !== -1) {
-          room[userIndex].id = socket.id;
+        if (!room.users) {
+          room.users = [];
+          room.users.push({ id: socket.id, user: username, email: email });
           rooms.set(roomId, room);
           socket.join(roomId);
+        }
+        else{
+          const userIndex = room.user.findIndex((user) => user.email === email);
+          if (userIndex !== -1) {
+            room.user[userIndex].id = socket.id;
+            rooms.set(roomId, room);
+            socket.join(roomId);
+          }
         }
       }
       console.log("existing user",rooms)
@@ -172,16 +177,16 @@ io.on('connection', (socket) => {
 
     // Add the user to the room
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, []);
+      rooms.set(roomId, {users: []});
     }
-    const room = rooms.get(roomId);
-    room.push({ id: socket.id, user: username, email: email });
+    let room = rooms.get(roomId);
+    room.users.push({ id: socket.id, user: username, email: email });
     rooms.set(roomId, room);
     socket.join(roomId);
     // Add the user to the connected users map
     connectedUsers.set(email, socket.id);
     // Emit event to update clients
-    const roomUsers = room.map((user) => user.user);
+    const roomUsers = room.users.map((user) => user.user);
 
     io.to(roomId).emit('updateUsers', roomUsers);
 
@@ -337,30 +342,31 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () => {
-    // Remove the user from the connected users map
     const email = Array.from(connectedUsers.entries()).find(([_, socketId]) => socketId === socket.id)?.[0];
     if (email) {
       connectedUsers.delete(email);
-
-      // Remove the user from all rooms
       for (const [roomId, room] of rooms.entries()) {
-        const updatedRoom = room.filter((user) => user.email !== email);
-        if (updatedRoom.length !== room.length) {
-          const olduser = room.filter((user) => user.email === email)[0].user
-          if(updatedRoom.length===0){
-            rooms.delete(roomId);
+        if(room.users){
+          const updatedRoom = room.users.filter((user) => user.email !== email);
+          if (updatedRoom.length !== room.users.length) {
+            const olduser = room.users.filter((user) => user.email === email)[0].user
+            if(updatedRoom.length===0){
+              rooms.delete(roomId);
+            }
+            else{
+              //rooms.set(roomId, updatedRoom);
+              room.users = updatedRoom;
+              rooms.set(roomId, room);
+            }
+            console.log("old user",rooms)
+            io.to(roomId).emit('updateUsers', updatedRoom.map((user) => user.user))
+            io.to(roomId).emit('userLeft', olduser);
           }
-          else{
-            rooms.set(roomId, updatedRoom);
-          }
-          console.log("old user",rooms)
-          io.to(roomId).emit('updateUsers', updatedRoom.map((user) => user.user))
-          io.to(roomId).emit('userLeft', olduser);
         }
+        socket.rooms.forEach(roomId => {
+          socket.leave(roomId);
+        });
       }
-      socket.rooms.forEach(roomId => {
-        socket.leave(roomId);
-      });
     }
   });
 });

@@ -23,7 +23,7 @@ const Room = ({setUsername, username, setEmail, email}) => {
       setEmail(storedEmail);
     }
     //add a socket function to check if the room exists
-  }, []);
+  }, [ setUsername, setEmail]);
 
   useEffect(() => {
     const newSocket = io(ENDPOINT);
@@ -52,7 +52,7 @@ const Room = ({setUsername, username, setEmail, email}) => {
       newSocket.disconnect();
     };
 
-  }, [roomId, username]);
+  }, [roomId, username, email]);
   
   return (
     <div className="relative h-full w-full overflow-hidden">

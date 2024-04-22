@@ -1,9 +1,10 @@
-import ReactFlow, { addEdge, Background, Controls, MiniMap, Panel, useEdgesState, useNodesState, Position } from 'reactflow';
+import ReactFlow, { Background, Controls, MiniMap, useEdgesState, useNodesState, Position, useReactFlow } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useState, useRef, useCallback, useEffect  } from 'react';
 import ResizeRotateNode from './ResizeRotateNode.js';
 import BgType from './BgType.js';
 import Sidebar from './Sidebar.js';
+import Save from './Save.js';
 // const initialNodes = [
 //     { id: '1', data: { label: '-' }, position: { x: 100, y: 100 } },
 //     { id: '2', data: { label: 'Node 2' }, position: { x: 100, y: 200 } },
@@ -68,6 +69,7 @@ const Whiteboard = ({socket,roomId,username,email})=> {
     const [operation, setOperation] = useState('');
     const [mySelectedNodes, setMySelectedNodes] = useState([]);
     const [mySelectedEdges, setMySelectedEdges] = useState([]);
+    const { setViewport } = useReactFlow();
 
     const handleBgColorChange = (nodeId, newBackgroundColor) => {
       setNodes((nodes) =>
@@ -143,11 +145,11 @@ const Whiteboard = ({socket,roomId,username,email})=> {
         setMyNode(newNode);
         setOperation('adding');
       },
-      [reactFlowInstance],
+      [reactFlowInstance, setNodes],
     );
 
     const onNodeDoubleClick = (event, node) => {
-      if(selectNode=={}||selectNode.id!==node.id){
+      if(Object.keys(selectNode).length === 0||selectNode.id!==node.id){
         setSelectNode(node)
       }
       else{
@@ -206,21 +208,16 @@ const Whiteboard = ({socket,roomId,username,email})=> {
       };
     }, []);
 
-   useEffect(() => {
-  // Find the node that is being resized
+useEffect(() => {
   const resizingNode = nodes.find((node) => node.resizing);
-    console.log(resizingNode);
-  // If a node is being resized and it's not the same as the current myNode, update myNode
   if (resizingNode) {
     setOperation('resizing');
     setMyNode(resizingNode);
   }
-
-  // If no node is being resized and myNode is not empty, set myNode to an empty object
   if (!resizingNode && Object.keys(myNode).length > 0) {
     setMyNode({});
   }
-}, [nodes]);
+}, [nodes, myNode]);
 
 useEffect(() => {
   const handleAddingEdge = ({ myEdge: newEdge, email: senderEmail, username: otheruser }) => {
@@ -339,7 +336,7 @@ useEffect(() => {
     socket.off('updatingTextColor');
     socket.off('updatingBgColor');
   };  
-}, [email, socket]);
+}, [email, socket, setNodes, setEdges]);
 
 useEffect(() => {
     socket.emit('nodeUpdates', { myNode, roomId, username, email, operation });
@@ -393,6 +390,7 @@ useEffect(() => {
             <Controls />
             {/* <ToolVisible setNodes={setNodes} /> */}
             <MiniMap nodeStrokeWidth={3} zoomable pannable position='top-right' />
+            <Save reactFlowInstance={reactFlowInstance} setNodes={setNodes} setEdges={setEdges} setViewport={setViewport}/>
             </ReactFlow>
         </div>
         <Sidebar selectNode={selectNode} setNodes={setNodes} setMyNode={setMyNode} setOperation={setOperation} /*onUpdateNode={(selectNode)=>update*//> 
