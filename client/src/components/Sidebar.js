@@ -91,7 +91,6 @@ const handleLabelChange = (newLabel) => {
 };
 
   const handleUpdateClick = () => {
-    // Call handleLabelChange with the current value of the input field
     handleLabelChange(label);
   };
 

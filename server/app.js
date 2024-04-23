@@ -214,24 +214,20 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     switch (operation) {
       case 'deleting':
-        // Handle dropping operation
         room.edges = room.edges.filter((edge) => !ids.includes(edge.id));
         io.to(roomId).emit('deletingSelectedEdges', { ids, email, username });
         break;
       case 'colouring':
-        // Handle dropping operation
         console.log("colouring edges")
         // const color = mySelectedEdges[0].style.stroke;
         // io.to(roomId).emit('colouringSelectedEdges', { ids, color, email, username });
         break;
       case 'textcolouring':
-        // Handle dropping operation
         console.log("text colouring edges")
         // const textColor = mySelectedEdges[0].style.label.style.stroke;
         // io.to(roomId).emit('textcolouringSelectedEdges', { ids, textColor, email, username });
         break;
       case 'import':
-        // Handle importing operation
         room.edges = mySelectedEdges
         io.to(roomId).emit('importingEdges', { mySelectedEdges, email, username });
         break;

@@ -27,12 +27,11 @@ const Room = ({setUsername, username, setEmail, email}) => {
 
   useEffect(() => {
     const newSocket = io(ENDPOINT);
-    // Connect to the newSocket server
     newSocket.on('connect', () => {
       // Emit the 'joinRoom' event to inform the server about the user joining
       newSocket.emit('joinRoom', { roomId, username, email });
     });
-    // Update the user list when receiving an 'updateUsers' event from the server
+    // Update the user list 
     newSocket.on('updateUsers', (roomUsers) => {
       setUsers(roomUsers);
     });
@@ -40,14 +39,12 @@ const Room = ({setUsername, username, setEmail, email}) => {
     newSocket.on('userLeft', (oldUser) => {
       window.alert(`${oldUser} left the room`);
     });
-    // Display an alert when a new user joins
     newSocket.on('userJoined', (newUser) => {
       if(username!==newUser){
         window.alert(`${newUser} joined the room`);
       }
     });
     setSocket(newSocket);
-    // Disconnect the newSocket when the component unmounts
     return () => {
       newSocket.disconnect();
     };
