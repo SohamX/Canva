@@ -18,19 +18,14 @@ const defaultNodes = [
     position: { x: 100, y: 100 },
     data: { label: "Node 1", forceToolbarVisible: false, textColor: '#000000', backgroundColor: '#FFFFFF'},
     type: "resizeRotate",
-    sourcePosition: Position.Bottom,
-    targetPosition: Position.Top,
-    selected: true,
-    style: { width: 180, height: 100 }
+
   },
   {
     id: "2",
     position: { x: 100, y: 400 },
     data: { label: "Node 2", forceToolbarVisible: false, textColor: '#000000', backgroundColor: '#FFFFFF' },
     type: "resizeRotate",
-    sourcePosition: Position.Bottom,
-    targetPosition: Position.Top,
-    style: { width: 180, height: 100 }
+
   }
 ];
 
@@ -88,8 +83,9 @@ const Whiteboard = ({socket,roomId,username,email})=> {
     };
 
     const onConnect = (params) => {
+      console.log(params);
       const newEdge = {
-        id: `e${params.source}-${params.target}`,
+        id: `e${params.sourceHandle}-${params.targetHandle}-${params.source}-${params.target}`,
         ...params,
         animated: true,
         style: { stroke: '#f6ab6c' },
@@ -208,155 +204,186 @@ const Whiteboard = ({socket,roomId,username,email})=> {
       };
     }, []);
 
-useEffect(() => {
-  const resizingNode = nodes.find((node) => node.resizing);
-  if (resizingNode) {
-    setOperation('resizing');
-    setMyNode(resizingNode);
-  }
-  if (!resizingNode && Object.keys(myNode).length > 0) {
-    setMyNode({});
-  }
-}, [nodes, myNode]);
+    useEffect(() => {
+      if(!nodes){
+        return;
+      }
+      const resizingNode = nodes.find((node) => node.resizing);
+      if (resizingNode) {
+        setOperation('resizing');
+        setMyNode(resizingNode);
+      }
+      if (!resizingNode && Object.keys(myNode).length > 0) {
+        setMyNode({});
+      }
+    }, [nodes, myNode]);
 
-useEffect(() => {
-  const handleAddingEdge = ({ myEdge: newEdge, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setEdges((edges) => edges.concat(newEdge));
-    }
-  };
-  const handleAddingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) => nodes.concat(newNode));
-      id++;
-    }
-  };
-  const handleDeletingEdge = ({ id, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setEdges((edges) => edges.filter((edge) => edge.id !== id));
-    }
-  };
-  const handleDeletingEdges = ({ ids, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setEdges((edges) => edges.filter((edge) => !ids.some((id) => id === edge.id)));
-    }
-  };
-  const handleDeletingNode = ({ id, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) => nodes.filter((node) => node.id !== id));
-    }
-  };
-  const handleDeletingNodes = ({ ids, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) => nodes.filter((node) => !ids.some((id) => id === node.id)));
-    }
-  };
-  const handleDraggingNode = ({ id, position, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) =>
-        nodes.map((node) => 
-          node.id === id ? { ...node, position } : node
-        )
-      );
-    }
-  };
-  const handleDraggingNodes = ({ ids, positions, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) =>
-        nodes.map((node) => {
-          const index = ids.indexOf(node.id);
-          if (index !== -1) {
-            return { ...node, position: positions[index] };
-          }
-          return node;
-        })
-      );
-    }
-  };
-  const handleResizingNode = ({ id, style, width, height, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) =>
-        nodes.map((node) =>
-          node.id === id ? { ...node, style, width, height } : node
-        )
-      );
-    }
-  };
-  const handleUpdatingLabelNode = ({ id, label, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) =>
-      nodes.map((node) => 
-        node.id === id ? {...node, data: { ...node.data, label} } : node
-        )
-      );
-    }
-  };
-  const handleUpdattinTextColor = ({ id, textColor, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) =>
-      nodes.map((node) => 
-        node.id === id ? {...node, data: { ...node.data, textColor} } : node
-        )
-      );
-    }
-  };
-  const handleUpdatingBgColor = ({ id, backgroundColor, email: senderEmail, username: otheruser }) => {
-    if (senderEmail !== email) {
-      setNodes((nodes) =>
-      nodes.map((node) => 
-        node.id === id ? {...node, data: { ...node.data, backgroundColor} } : node
-        )
-      );
-    }
-  };
+    useEffect(() => {
+      const handleAddingEdge = ({ myEdge: newEdge, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setEdges((edges) => edges.concat(newEdge));
+        }
+      };
+      const handleAddingNode = ({ myNode: newNode, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) => nodes.concat(newNode));
+          id++;
+        }
+      };
+      const handleDeletingEdge = ({ id, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setEdges((edges) => edges.filter((edge) => edge.id !== id));
+        }
+      };
+      const handleDeletingEdges = ({ ids, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setEdges((edges) => edges.filter((edge) => !ids.some((id) => id === edge.id)));
+        }
+      };
+      const handleDeletingNode = ({ id, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) => nodes.filter((node) => node.id !== id));
+        }
+      };
+      const handleDeletingNodes = ({ ids, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) => nodes.filter((node) => !ids.some((id) => id === node.id)));
+        }
+      };
+      const handleDraggingNode = ({ id, position, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) =>
+            nodes.map((node) => 
+              node.id === id ? { ...node, position } : node
+            )
+          );
+        }
+      };
+      const handleDraggingNodes = ({ ids, positions, email: senderEmail, username: otheruser }) => {
+        //take care of nodes overlapping with the help of selected field or dragging field.
+        if (senderEmail !== email) {
+          setNodes((nodes) =>
+            nodes.map((node) => {
+              const index = ids.indexOf(node.id);
+              if (index !== -1) {
+                return { ...node, position: positions[index] };
+              }
+              return node;
+            })
+          );
+        }
+      };
+      const handleImportingNodes = ({ mySelectedNodes: importedNodes, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          console.log(importedNodes);
+          setNodes(importedNodes);
+        }
+      };
+      const handleImportingEdges = ({ mySelectedEdges: importedEdges, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          console.log(importedEdges);
+          setEdges(importedEdges);
+        }
+      };
+      const handleResizingNode = ({ id, width, height, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) =>
+            nodes.map((node) =>
+              node.id === id ? { ...node, width, height } : node
+            )
+          );
+        }
+      };
+      const handleUpdatingLabelNode = ({ id, label, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) =>
+          nodes.map((node) => 
+            node.id === id ? {...node, data: { ...node.data, label} } : node
+            )
+          );
+        }
+      };
+      const handleUpdattinTextColor = ({ id, textColor, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) =>
+          nodes.map((node) => 
+            node.id === id ? {...node, data: { ...node.data, textColor} } : node
+            )
+          );
+        }
+      };
+      const handleUpdatingBgColor = ({ id, backgroundColor, email: senderEmail, username: otheruser }) => {
+        if (senderEmail !== email) {
+          setNodes((nodes) =>
+          nodes.map((node) => 
+            node.id === id ? {...node, data: { ...node.data, backgroundColor} } : node
+            )
+          );
+        }
+      };
 
-  socket.on('addingEdge', handleAddingEdge);
-  socket.on('addingNode', handleAddingNode);
-  socket.on('deletingEdge', handleDeletingEdge);
-  socket.on('deletingSelectedEdges', handleDeletingEdges);
-  socket.on('deletingNode', handleDeletingNode);
-  socket.on('deletingSelectedNodes', handleDeletingNodes);
-  socket.on('draggingNode', handleDraggingNode);
-  socket.on('draggingSelectedNodes', handleDraggingNodes);
-  socket.on('resizingNode', handleResizingNode);
-  socket.on('updatingLabelNode', handleUpdatingLabelNode);
-  socket.on('updatingTextColor', handleUpdattinTextColor);
-  socket.on('updatingBgColor', handleUpdatingBgColor);
-  return () => {
-    socket.off('addingNode');
-    socket.off('addingEdge');
-    socket.off('deletingEdge');
-    socket.off('deletingSelectedEdges');
-    socket.off('deletingNode');
-    socket.off('deletingSelectedNodes');
-    socket.off('draggingNodes');
-    socket.off('draggingSelectedNodes');
-    socket.off('resizingNode');
-    socket.off('updatingLabelNode');
-    socket.off('updatingTextColor');
-    socket.off('updatingBgColor');
-  };  
-}, [email, socket, setNodes, setEdges]);
+      socket.on('addingEdge', handleAddingEdge);
+      socket.on('addingNode', handleAddingNode);
+      socket.on('deletingEdge', handleDeletingEdge);
+      socket.on('deletingSelectedEdges', handleDeletingEdges);
+      socket.on('deletingNode', handleDeletingNode);
+      socket.on('deletingSelectedNodes', handleDeletingNodes);
+      socket.on('draggingNode', handleDraggingNode);
+      socket.on('draggingSelectedNodes', handleDraggingNodes);
+      socket.on('importingNodes', handleImportingNodes);
+      socket.on('importingEdges', handleImportingEdges);
+      socket.on('resizingNode', handleResizingNode);
+      socket.on('updatingLabelNode', handleUpdatingLabelNode);
+      socket.on('updatingTextColor', handleUpdattinTextColor);
+      socket.on('updatingBgColor', handleUpdatingBgColor);
+      return () => {
+        socket.off('addingNode');
+        socket.off('addingEdge');
+        socket.off('deletingEdge');
+        socket.off('deletingSelectedEdges');
+        socket.off('deletingNode');
+        socket.off('deletingSelectedNodes');
+        socket.off('draggingNodes');
+        socket.off('draggingSelectedNodes');
+        socket.off('resizingNode');
+        socket.off('updatingLabelNode');
+        socket.off('updatingTextColor');
+        socket.off('updatingBgColor');
+      };  
+    }, [email, socket]);
 
-useEffect(() => {
-    socket.emit('nodeUpdates', { myNode, roomId, username, email, operation });
-    setOperation('');
-}, [myNode, roomId, username, email, socket]);
+    useEffect(() => {
+      //if (operation === 'draging'||operation === 'resizing'||operation==='') {
+        if (Object.keys(myNode).length === 0) {
+          return;
+        }
+        socket.emit('nodeUpdates', { myNode, roomId, username, email, operation });
+        setOperation('');
+    }, [myNode, roomId, username, email, socket]);
 
-useEffect(() => {
-  socket.emit('selectedNodesUpdates', { mySelectedNodes, roomId, username, email, operation });
-  setOperation('');
-}, [mySelectedNodes, roomId, username, email, socket]);
+    useEffect(() => {
+        if (Object.keys(mySelectedNodes).length === 0) {
+          return;
+        }
+      socket.emit('selectedNodesUpdates', { mySelectedNodes, roomId, username, email, operation });
+      setOperation('');
+    }, [mySelectedNodes, roomId, username, email, socket]);
 
-useEffect(() => {
-  socket.emit('edgeUpdates', { myEdge, roomId, username, email, operation });
-  setOperation('');
-},[myEdge, roomId, username, email, socket]);
+    useEffect(() => {
+      if(myEdge === null){
+        return;
+      }
+      socket.emit('edgeUpdates', { myEdge, roomId, username, email, operation });
+      setOperation('');
+    },[myEdge, roomId, username, email, socket]);
 
-useEffect(() => {
-  socket.emit('selectedEdgesUpdates', { mySelectedEdges, roomId, username, email, operation });
-  setOperation('');
-},[mySelectedEdges, roomId, username, email, socket]);
+    useEffect(() => {
+      if(mySelectedEdges.length === 0){
+        return;
+      }
+      socket.emit('selectedEdgesUpdates', { mySelectedEdges, roomId, username, email, operation });
+      setOperation('');
+    },[mySelectedEdges, roomId, username, email, socket]);
 
 
     return(
@@ -390,7 +417,7 @@ useEffect(() => {
             <Controls />
             {/* <ToolVisible setNodes={setNodes} /> */}
             <MiniMap nodeStrokeWidth={3} zoomable pannable position='top-right' />
-            <Save reactFlowInstance={reactFlowInstance} setNodes={setNodes} setEdges={setEdges} setViewport={setViewport}/>
+            <Save setOperation={setOperation} reactFlowInstance={reactFlowInstance} setNodes={setNodes} setEdges={setEdges} setViewport={setViewport} setMySelectedNodes={setMySelectedNodes} setMySelectedEdges={setMySelectedEdges}/>
             </ReactFlow>
         </div>
         <Sidebar selectNode={selectNode} setNodes={setNodes} setMyNode={setMyNode} setOperation={setOperation} /*onUpdateNode={(selectNode)=>update*//> 

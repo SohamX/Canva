@@ -19,133 +19,8 @@ server.listen(PORT, () => {
 });
 
 const rooms = new Map();
+const connectedUsers = new Map();
 
-// io.on('connection', (socket) => {
-//   const getRoomId = () => {
-//     const joinedRoom = [...socket.rooms].find((room) => room !== socket.id);
-
-//     if (!joinedRoom) return socket.id;
-
-//     return joinedRoom;
-//   };
-
-//   const leaveRoom = (roomId, socketId) => {
-//     const room = rooms.get(roomId);
-//     if (!room) return;
-
-//     // const userMoves = room.usersMoves.get(socketId);
-
-//     // if (userMoves) room.drawed.push(...userMoves);
-//     room.users.delete(socketId);
-
-//     socket.leave(roomId);
-//   };
-
-//   socket.on('create_room', (username) => {
-//     let roomId= '';
-//     do {
-//       roomId = Math.random().toString(36).substring(2, 6);
-//     } while (rooms.has(roomId));
-
-//     socket.join(roomId);
-
-//     rooms.set(roomId, {
-// //      usersMoves: new Map([[socket.id, []]]),
-// //      drawed: [],
-//       users: new Map([[socket.id, username]]),
-//     });
-
-//     io.to(socket.id).emit('created', roomId);
-//   });
-
-//   socket.on('check_room', (roomId) => {
-//     if (rooms.has(roomId)) socket.emit('room_exists', true);
-//     else socket.emit('room_exists', false);
-//   });
-
-//   socket.on('join_room', (roomId, username) => {
-//     const room = rooms.get(roomId);
-
-//     if (room && room.users.size < 12) {
-//       socket.join(roomId);
-
-//       room.users.set(socket.id, username);
-// //      room.usersMoves.set(socket.id, []);
-
-//       io.to(socket.id).emit('joined', roomId);
-//     } else io.to(socket.id).emit('joined', '', true);
-//   });
-
-//   socket.on('joined_room', () => {
-//     const roomId = getRoomId();
-
-//     const room = rooms.get(roomId);
-//     if (!room) return;
-
-//     io.to(socket.id).emit(
-//       'room',
-//       room,
-// //      JSON.stringify([...room.usersMoves]),
-//       JSON.stringify([...room.users])
-//     );
-
-//     socket.broadcast
-//       .to(roomId)
-//       .emit('new_user', socket.id, room.users.get(socket.id) || 'Anonymous');
-//   });
-
-//   socket.on('leave_room', () => {
-//     const roomId = getRoomId();
-//     leaveRoom(roomId, socket.id);
-
-//     io.to(roomId).emit('user_disconnected', socket.id);
-//   });
-
-  // socket.on('draw', (move) => {
-  //   const roomId = getRoomId();
-
-  //   const timestamp = Date.now();
-
-  //   // eslint-disable-next-line no-param-reassign
-  //   move.id = v4();
-
-  //   addMove(roomId, socket.id, { ...move, timestamp });
-
-  //   io.to(socket.id).emit('your_move', { ...move, timestamp });
-
-  //   socket.broadcast
-  //     .to(roomId)
-  //     .emit('user_draw', { ...move, timestamp }, socket.id);
-  // });
-
-  // socket.on('undo', () => {
-  //   const roomId = getRoomId();
-
-  //   undoMove(roomId, socket.id);
-
-  //   socket.broadcast.to(roomId).emit('user_undo', socket.id);
-  // });
-
-  // socket.on('mouse_move', (x, y) => {
-  //   socket.broadcast.to(getRoomId()).emit('mouse_moved', x, y, socket.id);
-  // });
-
-//   socket.on('send_msg', (msg) => {
-//     io.to(getRoomId()).emit('new_msg', socket.id, msg);
-//   });
-
-//   socket.on('disconnecting', () => {
-//     const roomId = getRoomId();
-//     leaveRoom(roomId, socket.id);
-
-//     io.to(roomId).emit('user_disconnected', socket.id);
-//   });
-// });
-
-// Socket.io connection
-
-const connectedUsers = new Map(); // Store connected users and their socket IDs
-let isUpdating=false
 io.on('connection', (socket) => {
   socket.on('joinRoom', ({ roomId, username, email }) => {
     // Check if the user is already connected
@@ -177,7 +52,20 @@ io.on('connection', (socket) => {
 
     // Add the user to the room
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, {users: []});
+      rooms.set(roomId, {users: [], edges: [], nodes: [  {
+        id: "1",
+        position: { x: 100, y: 100 },
+        data: { label: "Node 1", forceToolbarVisible: false, textColor: '#000000', backgroundColor: '#FFFFFF'},
+        type: "resizeRotate",
+    
+      },
+      {
+        id: "2",
+        position: { x: 100, y: 400 },
+        data: { label: "Node 2", forceToolbarVisible: false, textColor: '#000000', backgroundColor: '#FFFFFF' },
+        type: "resizeRotate",
+    
+      }]});
     }
     let room = rooms.get(roomId);
     room.users.push({ id: socket.id, user: username, email: email });
@@ -196,13 +84,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('nodeUpdates',({myNode,roomId,username,email,operation})=>{
-    console.log(roomId)
-    console.log(username)
-    console.log(email)
-    console.log(myNode)
-    console.log(operation)
-    //   // Process node updates here...
+    //for single node updates
     const id = myNode.id;
+    let room = rooms.get(roomId);
+    if (!room) return;
     switch (operation) {
       case 'adding':
         // Handle adding operation
@@ -213,36 +98,42 @@ io.on('connection', (socket) => {
         //   rooms.set(roomId, room);
         // }
         // console.log("adding node",rooms)
+        room.nodes.push(myNode);
         io.to(roomId).emit('addingNode', { myNode, email, username });
         break;
       case 'dragging':
         // Handle dragging operation
         const position = myNode.position;
+        room.nodes = room.nodes.map((node) => node.id === id ? { ...node, position } : node);
         io.to(roomId).emit('draggingNode', { id, position, email, username });
         break;
       case 'deleting':
         // Handle dropping operation
+        room.nodes = room.nodes.filter((node) => node.id !== id);
         io.to(roomId).emit('deletingNode', { id, email, username });
         break;
       case 'resizing':
         // Handle resizing operation
-        const style = myNode.style;
         const width = myNode.width;
         const height = myNode.height;
-        io.to(roomId).emit('resizingNode', { id, style, width, height, email, username });
+        room.nodes = room.nodes.map((node) => node.id === id ? { ...node, width, height } : node);
+        io.to(roomId).emit('resizingNode', { id, width, height, email, username });
       case 'updatingLabel':
         // Handle updating operation
         const label = myNode.data.label;
+        room.nodes = room.nodes.map((node) => node.id === id ? { ...node, data: { ...node.data, label } } : node);
         io.to(roomId).emit('updatingLabelNode', { id, label, email, username });
         break;
       case 'updatingTextColor':
         // Handle updating operation
         const textColor = myNode.data.textColor;
+        room.nodes = room.nodes.map((node) => node.id === id ? { ...node, data: { ...node.data, textColor } } : node);
         io.to(roomId).emit('updatingTextColor', { id, textColor, email, username });
         break;
       case 'updatingBgColor':
         // Handle updating operation
         const backgroundColor = myNode.data.backgroundColor;
+        room.nodes = room.nodes.map((node) => node.id === id ? { ...node, data: { ...node.data, backgroundColor } } : node);
         io.to(roomId).emit('updatingBgColor', { id, backgroundColor, email, username });
         break;  
       default:
@@ -250,40 +141,47 @@ io.on('connection', (socket) => {
         console.log(`Unknown operation: ${operation}`);
         break;
     }
+    rooms.set(roomId, room);
+    console.dir(rooms, { depth: null })
   })
 
   socket.on('selectedNodesUpdates',({mySelectedNodes,roomId,username,email,operation})=>{
-    console.log(roomId)
-    console.log(username)
-    console.log(email)
-    console.log(mySelectedNodes, "selected nodes")
-    console.log(operation)
-    //   // Process node updates here...
+    //for multiple node updates
     const ids = mySelectedNodes.map((node) => node.id);
+    let room = rooms.get(roomId);
     switch (operation) {
       case 'dragging':
         // Handle dragging operation
         const positions = mySelectedNodes.map((node) => node.position);
+        room.nodes = room.nodes.map((node) =>{ 
+          const index = ids.indexOf(node.id);
+          if (index !== -1) {
+            return { ...node, position: positions[index] };
+          }
+          return node
+        })
         io.to(roomId).emit('draggingSelectedNodes', { ids, positions, email, username });
         break;
       case 'deleting':
         // Handle dropping operation
+        room.nodes = room.nodes.filter((node) => !ids.includes(node.id));  
         io.to(roomId).emit('deletingSelectedNodes', { ids, email, username });
+        break;
+      case 'import':
+        // Handle importing operation
+        room.nodes = mySelectedNodes
+        io.to(roomId).emit('importingNodes', { mySelectedNodes, email, username });
         break;
       default:
         // Handle unknown operation
         console.log(`Unknown operation: ${operation}`);
         break;
     }
+    rooms.set(roomId, room);
   })
 
   socket.on('edgeUpdates',({myEdge,roomId,username,email,operation})=>{
-    console.log(roomId)
-    console.log(username)
-    console.log(email)
-    console.log(myEdge)
-    console.log(operation)
-    //   // Process node updates here...
+    //for single edge updates
     if(!myEdge){
       console.log("empty edge")
       return;
@@ -293,33 +191,31 @@ io.on('connection', (socket) => {
       return;
     }
     const id = myEdge.id;
+    const room = rooms.get(roomId);
     switch (operation) {
       case 'adding':
-        // Handle adding operation
+        room.edges.push(myEdge);
         io.to(roomId).emit('addingEdge', { myEdge, email, username });
         break;
       case 'deleting':
-        // Handle dropping operation
+        room.edges = room.edges.filter((edge) => edge.id !== id);
         io.to(roomId).emit('deletingEdge', { id, email, username });
         break;
       default:
-        // Handle unknown operation
         console.log(`Unknown operation: ${operation}`);
         break;
     }
+    rooms.set(roomId, room);
   })
 
   socket.on('selectedEdgesUpdates',({mySelectedEdges,roomId,username,email,operation})=>{
-    console.log(roomId)
-    console.log(username)
-    console.log(email)
-    console.log(mySelectedEdges, "selected edges")
-    console.log(operation)
-    //   // Process node updates here...
+    // Multiple edge updates here...
     const ids = mySelectedEdges.map((edge) => edge.id);
+    const room = rooms.get(roomId);
     switch (operation) {
       case 'deleting':
         // Handle dropping operation
+        room.edges = room.edges.filter((edge) => !ids.includes(edge.id));
         io.to(roomId).emit('deletingSelectedEdges', { ids, email, username });
         break;
       case 'colouring':
@@ -334,11 +230,17 @@ io.on('connection', (socket) => {
         // const textColor = mySelectedEdges[0].style.label.style.stroke;
         // io.to(roomId).emit('textcolouringSelectedEdges', { ids, textColor, email, username });
         break;
+      case 'import':
+        // Handle importing operation
+        room.edges = mySelectedEdges
+        io.to(roomId).emit('importingEdges', { mySelectedEdges, email, username });
+        break;
       default:
         // Handle unknown operation
         console.log(`Unknown operation: ${operation}`);
         break;
     }
+    rooms.set(roomId, room);
   })
 
   socket.on('disconnect', () => {

@@ -1,8 +1,8 @@
 import React, {useCallback} from 'react';
-import { Background, Panel } from 'reactflow';
+import { Panel } from 'reactflow';
 import { js2xml, xml2js } from 'xml-js';
 
-const Save = ({reactFlowInstance, setNodes, setEdges, setViewport}) => {
+const Save = ({setOperation, reactFlowInstance, setNodes, setEdges, setViewport, setMySelectedNodes, setMySelectedEdges}) => {
     const onSave = useCallback(() =>{
         if (reactFlowInstance) {
           const flow = reactFlowInstance.toObject();
@@ -51,13 +51,11 @@ const Save = ({reactFlowInstance, setNodes, setEdges, setViewport}) => {
                         backgroundColor: node.data.backgroundColor._text,
                     },
                     type: node.type._text,
-                    sourcePosition: node.sourcePosition._text,
-                    targetPosition: node.targetPosition._text,
-                    selected: Boolean(node.selected._text=== 'true' ? true : false),
-                    style: {
-                        width: Number(node.style.width._text),
-                        height: Number(node.style.height._text),
-                    },
+                    selected: node.selected && node.selected._text === 'true' ? true : false,
+                    // style: {
+                    //     width: Number(node.style.width._text),
+                    //     height: Number(node.style.height._text),
+                    // },
                     width: Number(node.width._text),
                     height: Number(node.height._text),
                     positionAbsolute:{
@@ -84,7 +82,10 @@ const Save = ({reactFlowInstance, setNodes, setEdges, setViewport}) => {
                     }));
                 }
                 setNodes(nodes || []);
-                setEdges(edges || []); // Adjust this if your XML contains edges
+                setEdges(edges || []);
+                setOperation('import');
+                setMySelectedNodes(nodes||[]);
+                setMySelectedEdges(edges||[]);
                 setViewport({ x, y, zoom });
               }
             } catch (error) {
@@ -98,13 +99,13 @@ const Save = ({reactFlowInstance, setNodes, setEdges, setViewport}) => {
           reader.readAsText(file);
         };
         input.click();
-    }, [setNodes, setViewport, setEdges]);
+    }, [setNodes, setViewport, setEdges, setOperation, setMySelectedNodes, setMySelectedEdges]);
 
     return (
         <Panel position='bottom-center'>
             <div className="mt-6">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={onSave}>Save</button>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={onRestore}>Restore</button>
+                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={onSave}>Export</button>
+                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={onRestore}>Import</button>
             </div>
         </Panel>
     );

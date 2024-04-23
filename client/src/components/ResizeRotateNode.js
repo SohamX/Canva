@@ -57,7 +57,7 @@ export default function ResizeRotateNode({
     if (data && data.textColor && data.textColor !== textColor) {
       setTextColor(data.textColor);
     }
-  }, [data, toolbarVisible, backgroundColor, textColor]);  
+  }, [data]);  
 
   // const handleColorChange = (event) => {
   //   setBackgroundColor(event.target.value);
@@ -150,8 +150,16 @@ export default function ResizeRotateNode({
         <div >
           {data?.label}
         </div>
-        <Handle style={{ opacity: 0 }} position={sourcePosition} type="source" />
-        <Handle style={{ opacity: 0 }} position={targetPosition} type="target" />
+        {/* <Handle style={{ opacity: 0 }} position={sourcePosition} type="source" />
+        <Handle style={{ opacity: 0 }} position={targetPosition} type="target" /> */}
+         <Handle type="source" position="top" id="a" style={{ background: '#ff7f0e', zIndex: 2}} isConnectable={true} />
+         <Handle type="source" position="right" id="b" style={{ background: '#ff7f0e', zIndex: 2 }} isConnectable={true} />
+         <Handle type="target" position="bottom" id="c" style={{ background: '#1f77b4', zIndex: 1 }} isConnectable={true} />
+         <Handle type="target" position="left" id="d" style={{ background: '#1f77b4', zIndex: 1 }} isConnectable={true} />
+         <Handle type="target" position="top" id="a" style={{ background: '#ff7f0e', zIndex: 1 }} isConnectable={true} />
+         <Handle type="target" position="right" id="b" style={{ background: '#ff7f0e', zIndex: 1 }} isConnectable={true} />
+         <Handle type="source" position="bottom" id="c" style={{ background: '#1f77b4', zIndex: 2 }} isConnectable={true} />
+         <Handle type="source" position="left" id="d" style={{ background: '#1f77b4', zIndex: 2 }} isConnectable={true} />
       </div>
     </>
   );
