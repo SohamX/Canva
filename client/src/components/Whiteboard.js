@@ -285,6 +285,12 @@ const Whiteboard = ({socket,roomId,username,email})=> {
           setEdges(importedEdges);
         }
       };
+      const handleInitializingData = ({ nodes, edges, email: senderEmail }) => {
+        if (senderEmail === email) {
+          setNodes(nodes);
+          setEdges(edges);
+        }
+      };
       const handleResizingNode = ({ id, width, height, email: senderEmail, username: otheruser }) => {
         if (senderEmail !== email) {
           setNodes((nodes) =>
@@ -332,6 +338,7 @@ const Whiteboard = ({socket,roomId,username,email})=> {
       socket.on('draggingSelectedNodes', handleDraggingNodes);
       socket.on('importingNodes', handleImportingNodes);
       socket.on('importingEdges', handleImportingEdges);
+      socket.on('initialData', handleInitializingData);
       socket.on('resizingNode', handleResizingNode);
       socket.on('updatingLabelNode', handleUpdatingLabelNode);
       socket.on('updatingTextColor', handleUpdattinTextColor);

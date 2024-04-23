@@ -1,8 +1,18 @@
 import React, {useCallback} from 'react';
-import { Panel } from 'reactflow';
+import { Panel, getRectOfNodes, getTransformForBounds, useReactFlow } from 'reactflow';
 import { js2xml, xml2js } from 'xml-js';
+import { toPng } from 'html-to-image';
+
+function downloadImage(dataUrl) {
+  const a = document.createElement('a');
+
+  a.setAttribute('download', 'reactflow.png');
+  a.setAttribute('href', dataUrl);
+  a.click();
+}
 
 const Save = ({setOperation, reactFlowInstance, setNodes, setEdges, setViewport, setMySelectedNodes, setMySelectedEdges}) => {
+    const { getNodes } = useReactFlow();
     const onSave = useCallback(() =>{
         if (reactFlowInstance) {
           const flow = reactFlowInstance.toObject();
@@ -101,11 +111,36 @@ const Save = ({setOperation, reactFlowInstance, setNodes, setEdges, setViewport,
         input.click();
     }, [setNodes, setViewport, setEdges, setOperation, setMySelectedNodes, setMySelectedEdges]);
 
+    const onImage = () => {
+      const nodesBounds = getRectOfNodes(getNodes());
+      const padding = 20;
+      nodesBounds.x -= padding;
+      nodesBounds.y -= padding;
+      nodesBounds.width += padding * 2;
+      nodesBounds.height += padding * 2;
+      const viewportElement = document.querySelector('.react-flow__viewport');
+      const imageWidth = viewportElement.clientWidth;
+      const imageHeight = viewportElement.clientHeight;
+      const transform = getTransformForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2);
+  
+      toPng(viewportElement, {
+        backgroundColor: '#1a365d',
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: imageWidth,
+          height: imageHeight,
+          transform: `translate(${transform[0]}px, ${transform[1]}px) scale(${transform[2]})`,
+        },
+      }).then(downloadImage);
+    };
+
     return (
         <Panel position='bottom-center'>
             <div className="mt-6">
                 <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={onSave}>Export</button>
                 <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={onRestore}>Import</button>
+                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={onImage}>Download Image</button>
             </div>
         </Panel>
     );

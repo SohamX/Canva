@@ -16,32 +16,33 @@ export default function ResizeRotateNode({
   // onTextColorChange,
   // onBgColorChange,
 }) {
-  const rotateControlRef = useRef(null);
+  //const rotateControlRef = useRef(null);
   const updateNodeInternals = useUpdateNodeInternals();
-  const [rotation, setRotation] = useState(0);
+  //const [rotation, setRotation] = useState(0);
   const [resizable, setResizable] = useState(true);
-  const [rotatable, setRotatable] = useState(true);
+  //const [rotatable, setRotatable] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState(data.backgroundColor); // Default color white
   const [textColor, setTextColor] = useState(data.textColor); // Default color black
   const [toolbarVisible, setToolbarVisible] = useState(false); // or initialize with whatever default visibility you want
 
-  useEffect(() => {
-    if (!rotateControlRef.current) {
-      return;
-    }
+  // for changing the orientation of the node
+  // useEffect(() => {
+  //   if (!rotateControlRef.current) {
+  //     return;
+  //   }
 
-    const selection = select(rotateControlRef.current);
-    const dragHandler = drag().on('drag', (evt) => {
-      const dx = evt.x - 100;
-      const dy = evt.y - 100;
-      const rad = Math.atan2(dx, dy);
-      const deg = rad * (180 / Math.PI);
-      setRotation(180 - deg);
-      updateNodeInternals(id);
-    });
+  //   const selection = select(rotateControlRef.current);
+  //   const dragHandler = drag().on('drag', (evt) => {
+  //     const dx = evt.x - 100;
+  //     const dy = evt.y - 100;
+  //     const rad = Math.atan2(dx, dy);
+  //     const deg = rad * (180 / Math.PI);
+  //     setRotation(180 - deg);
+  //     updateNodeInternals(id);
+  //   });
 
-    selection.call(dragHandler);
-  }, [id, updateNodeInternals]);
+  //   selection.call(dragHandler);
+  // }, [id, updateNodeInternals]);
 
   // useEffect(() => {
   //   updateNodeInternals(id);
@@ -74,7 +75,7 @@ export default function ResizeRotateNode({
       <div
         style={{
           position: "relative",
-          transform: `rotate(${rotation}deg)`,
+         // transform: `rotate(${rotation}deg)`,
           backgroundColor: backgroundColor,
           color: textColor,
           textAlign: "center"
@@ -82,13 +83,14 @@ export default function ResizeRotateNode({
         className={styles.node}
       >
         <NodeResizer isVisible={resizable} minWidth={100} minHeight={100} />
-        <div
+        {/*for rotation
+         <div
           ref={rotateControlRef}
           style={{
             display: rotatable ? 'block' : 'none',
           }}
           className={`nodrag ${styles.rotateHandle}`}
-        />
+        /> */}
         <div style={{ position: 'relative' }}>
         <NodeToolbar
           isVisible={toolbarVisible}
@@ -115,7 +117,8 @@ export default function ResizeRotateNode({
               resizable
             </label>
           </div>
-          <div>
+          {/* displaying the rotatable checkbox 
+          <div> 
             <label>
               <input
                 type="checkbox"
@@ -124,7 +127,7 @@ export default function ResizeRotateNode({
               />
               rotatable
             </label>
-          </div>
+          </div> */}
           {/* <div>
             <label>
               Background Color:

@@ -75,7 +75,7 @@ io.on('connection', (socket) => {
     connectedUsers.set(email, socket.id);
     // Emit event to update clients
     const roomUsers = room.users.map((user) => user.user);
-
+    socket.emit('initialData', { nodes: room.nodes, edges: room.edges, email})
     io.to(roomId).emit('updateUsers', roomUsers);
 
     // Emit event to notify clients about the new user
