@@ -9,7 +9,7 @@ import { ReactFlowProvider } from 'reactflow';
 const Room = ({setUsername, username, setEmail, email}) => {
   const { roomId } = useParams();
   const [users, setUsers] = useState([]);
-  const ENDPOINT = 'http://localhost:3000'
+  const ENDPOINT = process.env.REACT_APP_SERVER_URL ||'http://localhost:3000'
   const navigate = useNavigate();
   const [socket, setSocket] = useState(null);
   
